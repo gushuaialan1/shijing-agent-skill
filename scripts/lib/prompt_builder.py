@@ -2,8 +2,16 @@
 # -*- coding: utf-8 -*-
 """Build stage prompts by replacing {{key}} and {{dot.path}} placeholders."""
 
+import json
 import re
 from pathlib import Path
+
+
+def _format_value(value) -> str:
+    """Serialize lists/dicts as JSON; fall back to str for other types."""
+    if isinstance(value, (list, dict)):
+        return json.dumps(value, ensure_ascii=False, indent=2)
+    return str(value) if value is not None else ""
 
 
 def _resolve_dot_path(state: dict, path: str) -> str:
@@ -15,7 +23,7 @@ def _resolve_dot_path(state: dict, path: str) -> str:
             value = value[key]
         else:
             return ""
-    return str(value) if value is not None else ""
+    return _format_value(value)
 
 
 def build_stage_prompt(stage: str, state: dict) -> str:
@@ -37,6 +45,6 @@ def build_stage_prompt(stage: str, state: dict) -> str:
         if "." in key:
             return _resolve_dot_path(state, key)
         value = state.get(key)
-        return str(value) if value is not None else ""
+        return _format_value(value)
 
     return re.sub(r"\{\{\s*([^}]+)\s*\}\}", replacer, prompt)

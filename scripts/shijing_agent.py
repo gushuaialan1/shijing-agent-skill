@@ -140,7 +140,11 @@ def _cmd_pipeline(args: argparse.Namespace) -> int:
                     break
                 prior_file = state_dir / f"{prior_stage}.json"
                 if prior_file.exists():
-                    prior_data = load_state(str(prior_file))
+                    try:
+                        prior_data = load_state(str(prior_file))
+                    except json.JSONDecodeError:
+                        print(f"Error: malformed JSON state file: {prior_file}", file=sys.stderr)
+                        return 1
                     stage_state = merge_state(stage_state, prior_data)
 
         try:
