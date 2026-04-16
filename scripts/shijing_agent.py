@@ -37,9 +37,11 @@ def load_yaml_config(path: str) -> dict[str, Any]:
         ) from exc
     with open(path, "r", encoding="utf-8") as f:
         config_data = yaml.safe_load(f)
+    if config_data is None:
+        config_data = {}
     if not isinstance(config_data, dict):
         raise ValueError("Config file must contain a YAML mapping (key-value pairs), got %s" % type(config_data).__name__)
-    return config_data or {}
+    return config_data
 
 
 def build_prompt(params: dict[str, Any]) -> str:
