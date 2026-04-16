@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["final_copy", "emotional_arc"],
+  "properties": {
+    "final_copy": { "type": "string" },
+    "emotional_arc": {
+      "type": "object",
+      "required": ["oppression", "confrontation", "pause", "flip_or_retrospect"],
+      "properties": {
+        "oppression": { "type": "string" },
+        "confrontation": { "type": "string" },
+        "pause": { "type": "string" },
+        "flip_or_retrospect": { "type": "string" }
+      }
+    }
+  }
+}

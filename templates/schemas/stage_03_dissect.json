@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["keyword_card", "ancient_modern_bridge"],
+  "properties": {
+    "keyword_card": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "required": ["word", "literal_meaning", "on_scene_action", "psychological_shift", "modern_mapping"],
+        "properties": {
+          "word": { "type": "string" },
+          "literal_meaning": { "type": "string" },
+          "on_scene_action": { "type": "string" },
+          "psychological_shift": { "type": "string" },
+          "modern_mapping": { "type": "string" }
+        }
+      }
+    },
+    "ancient_modern_bridge": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["historical_detail", "modern_issue", "mapping_type"],
+        "properties": {
+          "historical_detail": { "type": "string" },
+          "modern_issue": { "type": "string" },
+          "mapping_type": { "type": "string", "enum": ["\u7cfb\u7edf\u6620\u5c04", "\u5b57\u9762\u8054\u60f3"] }
+        }
+      }
+    }
+  }
+}

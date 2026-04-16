@@ -1,0 +1,63 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["final_review", "verdict"],
+  "properties": {
+    "final_review": {
+      "type": "object",
+      "required": [
+        "q1_visible_moment",
+        "q2_coordinate_valid",
+        "q3_back_to_source",
+        "q4_structural_isomorphism",
+        "q5_actionable_insight"
+      ],
+      "properties": {
+        "q1_visible_moment": {
+          "type": "object",
+          "required": ["answer", "reason"],
+          "properties": {
+            "answer": { "type": "boolean" },
+            "reason": { "type": "string" }
+          }
+        },
+        "q2_coordinate_valid": {
+          "type": "object",
+          "required": ["answer", "reason"],
+          "properties": {
+            "answer": { "type": "boolean" },
+            "reason": { "type": "string" }
+          }
+        },
+        "q3_back_to_source": {
+          "type": "object",
+          "required": ["answer", "reason"],
+          "properties": {
+            "answer": { "type": "boolean" },
+            "reason": { "type": "string" }
+          }
+        },
+        "q4_structural_isomorphism": {
+          "type": "object",
+          "required": ["answer", "reason"],
+          "properties": {
+            "answer": { "type": "boolean" },
+            "reason": { "type": "string" }
+          }
+        },
+        "q5_actionable_insight": {
+          "type": "object",
+          "required": ["answer", "reason"],
+          "properties": {
+            "answer": { "type": "boolean" },
+            "reason": { "type": "string" }
+          }
+        }
+      }
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["PASS", "NEEDS_REVISION"]
+    }
+  }
+}

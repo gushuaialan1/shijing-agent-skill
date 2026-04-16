@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["micro_scene"],
+  "properties": {
+    "micro_scene": {
+      "type": "object",
+      "required": ["selected_moment", "actions", "others_reaction", "dramatic_tension", "visual_elements"],
+      "properties": {
+        "selected_moment": { "type": "string" },
+        "actions": { "type": "string" },
+        "others_reaction": { "type": "string" },
+        "dramatic_tension": { "type": "string" },
+        "visual_elements": { "type": "string" }
+      }
+    }
+  }
+}

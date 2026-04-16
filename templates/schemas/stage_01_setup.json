@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["character", "text", "audience", "problem", "length", "hard_facts"],
+  "properties": {
+    "character": { "type": "string" },
+    "text": { "type": "string" },
+    "audience": { "type": "string" },
+    "problem": { "type": "string" },
+    "length": { "type": "string" },
+    "hard_facts": {
+      "type": "object",
+      "required": ["source_text", "time", "place", "institutional_context", "controversies"],
+      "properties": {
+        "source_text": { "type": "string" },
+        "time": { "type": "string" },
+        "place": { "type": "string" },
+        "institutional_context": { "type": "string" },
+        "controversies": { "type": "string" }
+      }
+    }
+  }
+}

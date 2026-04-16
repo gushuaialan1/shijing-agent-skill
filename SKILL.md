@@ -1,7 +1,7 @@
 ---
 name: shijing-agent
 description: "史镜 Agent — 历史人物深描型情绪文案生成技能"
-version: 1.0.0
+version: 2.0.0
 author: gushuaialan1
 license: MIT
 category: creative
@@ -11,6 +11,8 @@ metadata:
 ---
 
 # 史镜 Agent (Shijing Agent)
+
+> 本 Skill 采用**渐进式工作流**，零 LLM API 依赖。它提供分阶段的 Prompt 模板与数据验证工具，由宿主 Agent 分次调用 LLM 完成创作。
 
 围绕历史人物与经典文本，生成具备"史料锚定 + 镜头化取样 + 词眼拆解 + 古今对照 + 情绪编排"的深描型情绪文案。
 
@@ -26,78 +28,94 @@ metadata:
 
 不适用场景：纯学术考据、虚构架空创作、无历史文本支撑的空泛鸡汤。
 
-## Steps: the 7-step workflow
+## Progressive Workflow
 
-### Step 1 — 定题
-明确五要素，缺一不写：
+为了减少单次 LLM 调用的 token 压力，提高输出质量，本 Skill 将创作流程拆分为 **5 个渐进 Stage**。宿主 Agent 可以分多次调用 LLM，每次只提交一个精简 prompt，逐步积累状态。
 
-1. **人物**：核心历史人物是谁
-2. **文本/事件**：依托的原典、诗词或关键历史事件
-3. **当代情绪**：要解决现代人的哪种情绪（焦虑、迷茫、挫败、孤独等）
-4. **受众**：面向谁（年龄、职业、生活状态）
-5. **字数/时长**：成稿长度或视频时长
+| Stage | 模块名 | 职责 | 依赖 |
+|:---|:---|:---|:---|
+| 1 | `setup` | 定题 + 取证 | 用户五要素 |
+| 2 | `scene` | 选口（微场景） | stage_1 输出 |
+| 3 | `dissect` | 拆句 + 搭桥 | stage_1 + stage_2 输出 |
+| 4 | `compose` | 成稿 | stage_1/2/3 输出 |
+| 5 | `review` | 终审（五问质检） | stage_4 输出 |
 
-### Step 2 — 取证
-输出一页"硬事实卡"，至少包含：
+### 使用方式
 
-- **原典**：核心原文的准确引用（注意字词、标点和版本）
-- **时间**：事件发生的具体年份及人物当时的年龄/人生阶段
-- **地点**：地理空间及其政治/文化含义
-- **制度处境**：官职、身份、社会关系、权力结构
-- **争议点/学术分歧**：关于该文本或事件存在的主要解读差异
+1. 宿主 Agent 调用 `shijing_agent.py stage 01_setup --character ... --text ...`获取 prompt
+2. 将 prompt 投给 LLM，获取输出，提取为 JSON
+3. 保存 JSON 状态文件
+4. 下一个 stage 时使用 `--input <上一步的 JSON>`继续
+5. 可使用 `validate` 对每个 stage 的输出进行 JSON Schema 校验
 
-**原则**：先钉死"何时何地何因"，再进入阐释。杜绝无史料的情绪拼贴。
+## Stage Reference
 
-### Step 3 — 选口
-从人物一生或文本背景中，只选一个**最小、最硬、最能折射人物精神**的瞬间：
+| Stage | 关键输入 | 关键输出 | 约束 |
+|:---|:---|:---|:---|
+| `01_setup` | character, text, audience, problem, length | `hard_facts` (source_text, time, place, institutional_context, controversies) | 硬事实5项不能缺 |
+| `02_scene` | 前序 hard_facts | `micro_scene` (selected_moment, actions, others_reaction, dramatic_tension, visual_elements) | 必须是可视觉化的最小瞬间 |
+| `03_dissect` | 前序 hard_facts + micro_scene | `keyword_card` (3-5 条) + `ancient_modern_bridge` | 优先动词/虚词；古今对照必须标注映射类型 |
+| `04_compose` | 前序所有状态 | `final_copy` + `emotional_arc` (4 阶段) | 结构为困境→现场→拆句→对照→翻转→心法 |
+| `05_review` | stage_4 输出 | `final_review` (5 问答案) + `verdict` (PASS / NEEDS_REVISION) | 全部"是"才能 PASS |
 
-- 不要写"一生概括"，要写"一秒钟能拍出来的一件小事"
-- 优先选择包含"例外"或"反差"的场景：众人皆X，唯独他Y
-- 这个瞬间必须能被视觉化（有天气、有动作、有道具、有他人反应）
+## Data Contract
 
-### Step 4 — 拆句
-提取 3 到 5 个**推动人格显形的词眼**（优先动词、虚词、转折词），每条做四栏解析：
+完整状态 JSON 结构如下：
 
-| 词眼 | 字面意思 | 现场动作 | 心理位移 | 现代映射 |
-|:---|:---|:---|:---|:---|
-| 示例：莫听 | 不要听 | 屏蔽噪音的头部/注意力动作 | 从被动接受到主动隔离 | 关掉恶意评论页面 |
-
-**原则**：不解释景物名词，只拆真正能推动心理动作的词。
-
-### Step 5 — 搭桥
-建立古今对照卡，规则如下：
-
-- 每个历史细节**只配一个现代问题**，避免一条古文硬扯三四层当代议题
-- 对照的基础是**关系结构的同构**，而非表面词义的相似
-- 必须明确指出：这是"系统映射"还是"字面联想"
-
-示例：
-- 乌台诗案的政敌构陷 → 职场中的权力倾轧与流言（结构同构：外部权力威胁）
-- 雨中无伞的狼狈 → 现代社会中的身份焦虑（结构同构：体面丧失的恐惧）
-
-### Step 6 — 成稿
-按以下结构输出最终文案：
-
-1. **当下困境** — 用现代口语建立情绪共鸣（"太难了""熬不下去"等真实表达）
-2. **历史现场** — 切入硬事实和选定的微场景，还原具体时空
-3. **逐句拆解** — 用拆句成果逐层展开，把诗句转写为动作和心理
-4. **古今对照** — 用搭桥成果建立古今通道，让读者看到自己
-5. **情绪翻转** — 安排四次状态变化：压迫 → 对抗 → 停顿 → 翻转/回望；在对抗期通过质问、对峙或反问建立张力，让读者与人物共同承压
-6. **落到心法** — 给出可执行、可记忆的行动建议，不是空泛鼓励
-
-**风格约束**：
-- 不神化人物，不乱改原句，不把现代价值观硬塞回古人
-- 句式口语化，但证据链完整
-- 结尾给出具体心法，如"关掉页面""稳住脚步""慢慢来"
-
-### Step 7 — 终审
-用五问质检，全部回答"是"方可交付：
-
-1. **瞬间可见？** — 我有没有给读者一个能立刻在脑中成像的具体瞬间？
-2. **坐标成立？** — 这个瞬间为什么发生在那个人生坐标上（时间/地点/制度处境）？
-3. **回得去原文？** — 我拆解的每个"金句"，是否都能回到原文的准确措辞？
-4. **系统同构？** — 我的古今类比是基于关系结构的同构，还是表面相似？
-5. **可执行心法？** — 结尾给出的是能执行的行动建议，还是一句"你要坚强"？
+```json
+{
+  "character": "string",
+  "text": "string",
+  "audience": "string",
+  "problem": "string",
+  "length": "string",
+  "hard_facts": {
+    "source_text": "string",
+    "time": "string",
+    "place": "string",
+    "institutional_context": "string",
+    "controversies": "string"
+  },
+  "micro_scene": {
+    "selected_moment": "string",
+    "actions": "string",
+    "others_reaction": "string",
+    "dramatic_tension": "string",
+    "visual_elements": "string"
+  },
+  "keyword_card": [
+    {
+      "word": "string",
+      "literal_meaning": "string",
+      "on_scene_action": "string",
+      "psychological_shift": "string",
+      "modern_mapping": "string"
+    }
+  ],
+  "ancient_modern_bridge": [
+    {
+      "historical_detail": "string",
+      "modern_issue": "string",
+      "mapping_type": "系统映射 | 字面联想"
+    }
+  ],
+  "final_copy": "string",
+  "emotional_arc": {
+    "oppression": "string",
+    "confrontation": "string",
+    "pause": "string",
+    "flip_or_retrospect": "string"
+  },
+  "final_review": {
+    "q1_visible_moment": { "answer": true, "reason": "string" },
+    "q2_coordinate_valid": { "answer": true, "reason": "string" },
+    "q3_back_to_source": { "answer": true, "reason": "string" },
+    "q4_structural_isomorphism": { "answer": true, "reason": "string" },
+    "q5_actionable_insight": { "answer": true, "reason": "string" }
+  },
+  "verdict": "PASS"
+}
+```
 
 ## Pitfalls: common mistakes
 
@@ -107,7 +125,7 @@ metadata:
 **修正**：保留人物的"微冷"时刻——他也会怕、也会累、也会迷茫。
 
 ### 2. 鸡汤化
-把经典文本简化为空洞口号（"只要你豁达，一切都会好"），丢失原文的张力和历史语境。
+把经典文本简化为空洞口号（"只要你达观，一切都会好"），丢失原文的张力和历史语境。
 
 **修正**：每一句高光都必须有史料和具体场景托底。
 
@@ -137,5 +155,5 @@ metadata:
 - [ ] 成稿包含"困境→现场→拆句→对照→翻转→心法"六段结构
 - [ ] 情绪曲线至少包含四次变化（压迫、对抗、停顿、翻转/回望）
 - [ ] 结尾给出可执行心法，不是空泛鼓励
-- [ ] 五问质检已全部回答"是"
+- [ ] 五问质检全部回答"是"
 - [ ] 无引文错误、无事实硬伤、无过度鸡汤化表达
