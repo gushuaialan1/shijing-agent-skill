@@ -36,7 +36,10 @@ def load_yaml_config(path: str) -> dict[str, Any]:
             "Install it with: pip install pyyaml"
         ) from exc
     with open(path, "r", encoding="utf-8") as f:
-        return yaml.safe_load(f) or {}
+        config_data = yaml.safe_load(f)
+    if not isinstance(config_data, dict):
+        raise ValueError("Config file must contain a YAML mapping (key-value pairs), got %s" % type(config_data).__name__)
+    return config_data or {}
 
 
 def build_prompt(params: dict[str, Any]) -> str:
@@ -93,7 +96,7 @@ def build_markdown_report(params: dict[str, Any], prompt: str) -> str:
         "",
         "## 5. 情绪曲线",
         "",
-        "- 压迫：\n- 停顿：\n- 翻转/回望：",
+        "- 压迫：\n- 对抗：\n- 停顿：\n- 翻转/回望：",
         "",
         "## 6. 成稿",
         "",
@@ -143,6 +146,7 @@ def build_json_report(params: dict[str, Any], prompt: str) -> dict[str, Any]:
             "ancient_modern_bridge": [],
             "emotional_arc": {
                 "oppression": "",
+                "confrontation": "",
                 "pause": "",
                 "flip_or_retrospect": "",
             },
