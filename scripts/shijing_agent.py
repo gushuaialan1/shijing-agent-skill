@@ -49,7 +49,11 @@ def _build_base_state(args: argparse.Namespace) -> dict[str, Any]:
     state: dict[str, Any] = {}
 
     if getattr(args, "input", None):
-        state = load_state(args.input)
+        try:
+            state = load_state(args.input)
+        except json.JSONDecodeError as exc:
+            print(f"Error: JSON decode error in {args.input}: {exc}", file=sys.stderr)
+            sys.exit(1)
 
     if getattr(args, "config", None):
         if not os.path.isfile(args.config):
@@ -124,9 +128,23 @@ def _cmd_pipeline(args: argparse.Namespace) -> int:
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    state_dir = getattr(args, "state_dir", None)
+    if state_dir:
+        state_dir = Path(state_dir)
+
     for stage in STAGE_NAMES:
+        stage_state = dict(state)
+        if state_dir:
+            for prior_stage in STAGE_NAMES:
+                if prior_stage == stage:
+                    break
+                prior_file = state_dir / f"{prior_stage}.json"
+                if prior_file.exists():
+                    prior_data = load_state(str(prior_file))
+                    stage_state = merge_state(stage_state, prior_data)
+
         try:
-            prompt = build_stage_prompt(stage, state)
+            prompt = build_stage_prompt(stage, stage_state)
         except FileNotFoundError as exc:
             print(f"Error: {exc}", file=sys.stderr)
             return 1
@@ -175,6 +193,7 @@ def main() -> int:
     pipeline_parser = subparsers.add_parser("pipeline", help="一键生成全部 5 个 stage 的 prompts")
     pipeline_parser.add_argument("--config", required=True, help="YAML 配置文件路径")
     pipeline_parser.add_argument("--out-dir", required=True, help="输出目录")
+    pipeline_parser.add_argument("--state-dir", default=None, help="状态目录，包含各 stage 输出的 JSON 文件（如 01_setup.json）")
     pipeline_parser.set_defaults(func=_cmd_pipeline)
 
     args = parser.parse_args()

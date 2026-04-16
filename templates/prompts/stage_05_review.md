@@ -5,7 +5,10 @@
 ## 前序输入
 - 人物：{{character}}
 - 文本：{{text}}
-- 成稿：[see final_copy]
+- 成稿：
+```markdown
+{{final_copy}}
+```
 
 ## 本 Stage 职责
 严格回答以下五个问题。如果某一问答案为"否"，请说明具体问题所在。

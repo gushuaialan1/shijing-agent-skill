@@ -47,6 +47,7 @@ metadata:
 3. 保存 JSON 状态文件
 4. 下一个 stage 时使用 `--input <上一步的 JSON>`继续
 5. 可使用 `validate` 对每个 stage 的输出进行 JSON Schema 校验
+6. 也可使用 `pipeline --state-dir <状态目录>` 一键生成全部 prompts，后续 stage 会自动合并前置输出
 
 ## Stage Reference
 

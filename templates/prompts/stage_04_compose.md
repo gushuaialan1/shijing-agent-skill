@@ -16,8 +16,14 @@
 - 微场景动作：{{micro_scene.actions}}
 - 微场景他人反应：{{micro_scene.others_reaction}}
 - 微场景视觉元素：{{micro_scene.visual_elements}}
-- 词眼卡已在前一 stage 完成
-- 古今对照卡已在前一 stage 完成
+- 词眼卡：
+```json
+{{keyword_card}}
+```
+- 古今对照卡：
+```json
+{{ancient_modern_bridge}}
+```
 
 ## 本 Stage 职责
 按以下结构输出约 **{{length}}** 字的最终文案：

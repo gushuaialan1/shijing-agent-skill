@@ -116,6 +116,7 @@ python scripts/shijing_agent.py validate \
 ```bash
 python scripts/shijing_agent.py pipeline \
   --config task.yaml \
+  --state-dir ./state \
   --out-dir ./pipeline
 ```
 
